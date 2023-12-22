@@ -1,35 +1,33 @@
-const Discord = require('discord.js')
-const token = '##your_token_here##';
+const Discord = require('discord.js');
+const request = require('request');
 
-const Client = require('discord.js');
+const token = '##your_token_here##';
+const serverIPPort = '147.189.170.183:30120'; // your server ip with port here
+const voiceChannelId = '1022008414332780677'; // voice channel you want to change the name of
+
 const client = new Discord.Client({ disableEveryone: true });
 
+client.on('ready', () => {
+    console.log(`Logged in as ${client.user.tag}. Ready to engage on ${client.guilds.cache.size} servers.`);
+    client.user.setActivity(`${client.user.username}`, { type: 'WATCHING' })
+        .then(presence => console.log(`Activity set to ${presence.activities[0].name}`))
+        .catch(console.error);
 
-client.on("ready", async () => {                                                                                                                           //   can disable this function 
-	console.log('\x1b[32m%s\x1b[0m', `${client.user.username} is online and ready to do something! I'm live on ${client.guilds.size} servers.`);             //   can disable this function
-	client.user.setActivity(`${client.user.username} `, { type: 'Watching' })                                                                                //   can disable this function
-  .then(presence => console.log(`Activity set to ${presence.game ? presence.game.name : 'none'}`))                                                         //   can disable this function
-  .catch(console.error);                                                                                                                                   //   can disable this function
-	client.user.setStatus('dnd') // Online, idle, invisible & dnd                                                                                 
-  });
+    client.user.setStatus('dnd'); // Online, idle, invisible & dnd
 
-
-let serverIPPort = "147.189.170.183:30120";  // your server ip with port here
-let voiceChannelId = "1022008414332780677";  // voice channel you want change the name of
-
-const request = require('request');
-client.on("ready", async () => {
     setInterval(() => {
-        request(`http://${serverIPPort}/players.json"`, function(error, response, body) {
-            let channel = client.channels.get(voiceChannelId);
-            var bodJson = JSON.parse(body);
-            var playerCount = 0;
-            bodJson.forEach(players => {
-                playerCount++;
-            });
-            channel.setName(`Player Count: ${playerCount}`);        //  wt the name of channel will change to 
-        })
-    }, 12000); // refreshes every 2 mins
+        request(`http://${serverIPPort}/players.json`, (error, response, body) => {
+            if (error) {
+                console.error('Error:', error);
+                return;
+            }
+
+            const channel = client.channels.cache.get(voiceChannelId);
+            const bodJson = JSON.parse(body);
+            const playerCount = bodJson.length;
+            channel.setName(`Player Count: ${playerCount}`).catch(console.error);
+        });
+    }, 120000); // refreshes every 2 minutes
 });
 
 client.login(token);
